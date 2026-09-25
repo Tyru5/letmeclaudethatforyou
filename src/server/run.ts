@@ -29,6 +29,7 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
     pkg: "@anthropic-ai/claude-code",
     args: (q) => [
       "-p", q,
+      "--model", process.env.CLAUDE_MODEL || "claude-sonnet-5",
       "--output-format", "stream-json", "--verbose", "--include-partial-messages",
       "--max-turns", "6", "--max-budget-usd", "0.25", "--dangerously-skip-permissions",
     ],
@@ -50,6 +51,7 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
     parse: (line) => {
       let j: any;
       try { j = JSON.parse(line); } catch { return []; }
+      if (j.type === "system" && j.subtype === "init" && j.model) return [{ type: "tool", text: `model ${j.model}` }];
       if (j.type === "stream_event" && j.event?.type === "content_block_delta" && j.event.delta?.type === "text_delta")
         return text(j.event.delta.text);
       if (j.type === "assistant")
@@ -63,7 +65,21 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
   codex: {
     bin: "codex",
     pkg: "@openai/codex",
-    args: (q) => ["exec", "--json", "--skip-git-repo-check", "--full-auto", q],
+    args: (q) => [
+      "exec", "--json", "--skip-git-repo-check", "--ephemeral", "--dangerously-bypass-approvals-and-sandbox",
+      ...(process.env.OPENAI_API_KEY
+        ? (process.env.CODEX_MODEL ? ["-m", process.env.CODEX_MODEL] : [])
+        : [
+            // route through AI Gateway (responses wire API); key is brokered at the firewall
+            "-c", "model_provider=vercel",
+            "-c", 'model_providers.vercel.name="Vercel AI Gateway"',
+            "-c", 'model_providers.vercel.base_url="https://ai-gateway.vercel.sh/codex/v1"',
+            "-c", 'model_providers.vercel.env_key="AI_GATEWAY_API_KEY"',
+            "-c", 'model_providers.vercel.wire_api="responses"',
+            "-m", process.env.CODEX_MODEL || "openai/gpt-5.3-codex",
+          ]),
+      q,
+    ],
     broker: (): Broker =>
       process.env.OPENAI_API_KEY
         ? { domain: "api.openai.com", headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
@@ -72,12 +88,14 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
           : null,
     env: process.env.OPENAI_API_KEY
       ? { OPENAI_API_KEY: "brokered-at-firewall" }
-      : { OPENAI_API_KEY: "brokered-at-firewall", OPENAI_BASE_URL: "https://ai-gateway.vercel.sh/v1" },
+      : { AI_GATEWAY_API_KEY: "brokered-at-firewall" },
     parse: (line) => {
       let j: any;
       try { j = JSON.parse(line); } catch { return []; }
+      if (j.type === "thread.started" && j.model) return [{ type: "tool", text: `model ${j.model}` }];
       if (j.type === "item.completed" && j.item?.type === "agent_message") return text(j.item.text + "\n");
       if (j.type === "item.started" && j.item?.type === "command_execution") return [{ type: "tool", text: `$ ${j.item.command}` }];
+      if (j.type === "error" && /^Reconnecting/.test(String(j.message ?? ""))) return [{ type: "status", text: "Reconnecting" }];
       if (j.type === "turn.failed" || j.type === "error") return [{ type: "error", message: String(j.error?.message ?? j.message ?? "failed") }];
       return [];
     },

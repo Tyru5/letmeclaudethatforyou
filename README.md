@@ -26,6 +26,10 @@ echo ANTHROPIC_API_KEY=sk-ant-... >> .env.local
 Or durable: `VERCEL_TOKEN` + `VERCEL_TEAM_ID` + `VERCEL_PROJECT_ID` (see `.env.example`).
 `OPENAI_API_KEY` enables Codex, `GEMINI_API_KEY` enables Gemini.
 
+No provider keys? Set `AI_GATEWAY_USE_OIDC=1` (or `AI_GATEWAY_API_KEY`) and claude/codex route through
+Vercel AI Gateway on the team's credits. Models: `CLAUDE_MODEL` (default `claude-sonnet-5`),
+`CODEX_MODEL` (default `openai/gpt-5.3-codex` via gateway, CLI default with a direct key).
+
 How a run works (`src/server/run.ts`):
 - boots `vercel/sandbox/universal`, 1 vCPU, non-persistent, 3 min cap
 - egress allow-list is only the model API host; the real key is injected at the sandbox firewall, the VM only ever holds a placeholder
