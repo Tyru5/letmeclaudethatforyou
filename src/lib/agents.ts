@@ -10,7 +10,8 @@ export const AGENT = {
 
 export const MAX_PROMPT = 2000;
 
-export function buildSharePath(q: string) {
+export function buildSharePath(q: string, s = "") {
   const p = new URLSearchParams({ q: q.trim().slice(0, MAX_PROMPT) });
+  if (s) p.set("s", s);
   return `/go?${p.toString()}`;
 }

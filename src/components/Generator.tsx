@@ -1,13 +1,28 @@
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { createServerFn } from "@tanstack/react-start";
 import { AGENT, MAX_PROMPT, buildSharePath } from "@/lib/agents";
+
+const signQ = createServerFn()
+  .inputValidator((q: string) => q.trim().slice(0, MAX_PROMPT))
+  .handler(async ({ data }) => (await import("@/server/sign")).sign(data));
 
 export default function Generator() {
   const [q, setQ] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sig, setSig] = useState<{ q: string; s: string } | null>(null);
   const origin = useSyncExternalStore(() => () => {}, () => window.location.origin, () => "");
 
   const ready = q.trim().length > 0;
-  const path = buildSharePath(q);
+  // sign after typing pauses; the link updates once the signature lands
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(() => {
+      const mine = q;
+      signQ({ data: mine }).then((s) => setSig({ q: mine, s })).catch(() => {});
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q, ready]);
+  const path = buildSharePath(q, sig?.q === q ? sig.s : "");
   const url = origin + path;
 
   async function copy() {

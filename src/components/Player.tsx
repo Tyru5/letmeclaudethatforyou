@@ -8,7 +8,7 @@ type Typing = { prefix: string; prefixColor?: string; text: string } | null;
 
 const REDIRECT_SECS = 4;
 
-export default function Player({ q, live }: { q: string; live: boolean }) {
+export default function Player({ q, sig, live }: { q: string; sig: string; live: boolean }) {
   const agent = AGENT;
   const target = agent.webUrl(q);
 
@@ -54,7 +54,7 @@ export default function Player({ q, live }: { q: string; live: boolean }) {
 
     function runLive() {
       setStatus("Thinking");
-      const p = new URLSearchParams({ q });
+      const p = new URLSearchParams({ q, s: sig });
       es = new EventSource(`/api/run?${p}`);
       // reveal streamed text a few chars at a time so it reads like a terminal
       reveal = setInterval(() => {

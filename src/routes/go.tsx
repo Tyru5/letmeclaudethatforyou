@@ -4,17 +4,24 @@ import { getRequestHeader } from "@tanstack/react-start/server";
 import Player from "@/components/Player";
 import { MAX_PROMPT } from "@/lib/agents";
 
-const getPageData = createServerFn().handler(async () => {
-  const host = getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "localhost:3999";
-  const proto = getRequestHeader("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const { isLive } = await import("@/server/run");
-  return { origin: `${proto}://${host}`, live: await isLive() };
-});
+const getPageData = createServerFn()
+  .inputValidator((d: { q: string; s: string }) => d)
+  .handler(async ({ data }) => {
+    const host = getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "localhost:3999";
+    const proto = getRequestHeader("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+    const { isLive } = await import("@/server/run");
+    const { verify } = await import("@/server/sign");
+    // unsigned links still play the bit, they just don't get a VM
+    return { origin: `${proto}://${host}`, live: verify(data.q, data.s) && (await isLive()) };
+  });
 
 export const Route = createFileRoute("/go")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: String(s.q ?? "").trim().slice(0, MAX_PROMPT) }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    q: String(s.q ?? "").trim().slice(0, MAX_PROMPT),
+    s: typeof s.s === "string" ? s.s : "",
+  }),
   loaderDeps: ({ search }) => search,
-  loader: () => getPageData(),
+  loader: ({ deps }) => getPageData({ data: deps }),
   // Deliberately anonymous: the link preview shows only the question.
   head: ({ match, loaderData }) => {
     const q = match.search.q;
@@ -38,12 +45,12 @@ export const Route = createFileRoute("/go")({
 });
 
 function Go() {
-  const { q } = Route.useSearch();
+  const { q, s } = Route.useSearch();
   const { live } = Route.useLoaderData();
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-16 gap-8">
       {q ? (
-        <Player key={q} q={q} live={live} />
+        <Player key={q} q={q} sig={s} live={live} />
       ) : (
         <Link to="/" className="text-muted hover:text-fg">
           Let me Claude that for you
