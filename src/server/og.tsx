@@ -1,13 +1,11 @@
-import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
+// inlined as a data URL at build time so nothing has to be file-traced at runtime
+import fontDataUrl from "@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff?inline";
 
-const require = createRequire(import.meta.url);
-const fontPath = require.resolve("@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff");
+const font = Buffer.from(fontDataUrl.slice(fontDataUrl.indexOf(",") + 1), "base64");
 
 export async function renderOg(q: string): Promise<ArrayBuffer> {
-  const font = await readFile(fontPath);
   const text = q.length > 220 ? q.slice(0, 220) + "…" : q;
   const size = text.length > 120 ? 36 : text.length > 60 ? 44 : 54;
 
