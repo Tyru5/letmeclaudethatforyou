@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Generator from "@/components/Generator";
+import Mascot from "@/components/Mascot";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,6 +28,7 @@ function Home() {
         </p>
       </header>
       <Generator />
+      <Mascot play delay={400} />
     </main>
   );
 }

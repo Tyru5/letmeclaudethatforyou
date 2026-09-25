@@ -53,3 +53,57 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .cursor::after, .pop, .spin { animation: none; }
 }
+
+/* ---- mascot ---- */
+.mascot {
+  position: fixed;
+  left: 0;
+  bottom: 12vh;
+  z-index: 50;
+  pointer-events: none;
+  will-change: transform;
+  animation: mascot-run 4.5s linear forwards;
+}
+@keyframes mascot-run {
+  from { transform: translateX(-80px); }
+  to { transform: translateX(calc(100vw + 40px)); }
+}
+.mascot-hop {
+  transform-origin: 50% 100%;
+  animation: mascot-hop 0.75s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+}
+@keyframes mascot-hop {
+  0%   { transform: translateY(0) scale(1.12, 0.88) rotate(-4deg); }
+  18%  { transform: translateY(-14px) scale(0.94, 1.08) rotate(0deg); }
+  50%  { transform: translateY(-72px) scale(1, 1) rotate(6deg); }
+  82%  { transform: translateY(-14px) scale(0.98, 1.04) rotate(2deg); }
+  100% { transform: translateY(0) scale(1.12, 0.88) rotate(-4deg); }
+}
+.mascot-shadow {
+  position: absolute;
+  left: 8px;
+  bottom: -4px;
+  width: 40px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  animation: mascot-shadow 0.75s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+}
+@keyframes mascot-shadow {
+  0%, 100% { transform: scale(1.1); opacity: 0.6; }
+  50% { transform: scale(0.55); opacity: 0.25; }
+}
+.mascot-leg { transform-origin: 50% 0; animation: mascot-leg 0.75s ease-in-out infinite; }
+.mascot-leg-r { animation-delay: -0.375s; }
+@keyframes mascot-leg {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px) rotate(12deg); }
+}
+.mascot-eyes { transform-origin: 32px 30px; animation: mascot-blink 2.2s steps(1) infinite; }
+@keyframes mascot-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94%, 98% { transform: scaleY(0.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot { display: none; }
+}

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import Terminal from "@/components/Terminal";
+import Mascot from "@/components/Mascot";
 import { AGENT } from "@/lib/agents";
 
 type Line = { text: string; color?: string; muted?: boolean; prefix?: string; prefixColor?: string };
@@ -214,6 +215,7 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
           Make your own
         </Link>
       </p>
+      <Mascot play={done} delay={300} />
     </div>
   );
 }
