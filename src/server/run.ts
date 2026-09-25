@@ -1,5 +1,6 @@
 import { Writable } from "node:stream";
 import { Sandbox, type NetworkPolicy } from "@vercel/sandbox";
+import { getVercelOidcToken } from "@vercel/oidc";
 
 export type RunEvent =
   | { type: "status"; text: string }
@@ -10,33 +11,44 @@ export type RunEvent =
 
 const MODEL = () => process.env.CLAUDE_MODEL || "claude-haiku-4-5";
 
+/** OIDC token: `.env.local` locally, request header on Vercel. Empty when neither is present. */
+async function oidcToken(): Promise<string> {
+  try {
+    return await getVercelOidcToken();
+  } catch {
+    return "";
+  }
+}
+
 /** AI Gateway credential: explicit key, or the OIDC token when opted in (team needs gateway credits). */
-const gatewayKey = () =>
-  process.env.AI_GATEWAY_API_KEY || (process.env.AI_GATEWAY_USE_OIDC ? process.env.VERCEL_OIDC_TOKEN : "") || "";
+async function gatewayKey(): Promise<string> {
+  return process.env.AI_GATEWAY_API_KEY || (process.env.AI_GATEWAY_USE_OIDC ? await oidcToken() : "");
+}
 
 /** Host Claude Code talks to + the auth header injected at the sandbox firewall. The VM never sees the key. */
-function broker(): { domain: string; headers: Record<string, string>; env: Record<string, string> } | null {
+async function broker(): Promise<{ domain: string; headers: Record<string, string>; env: Record<string, string> } | null> {
   if (process.env.ANTHROPIC_API_KEY)
     return {
       domain: "api.anthropic.com",
       headers: { "x-api-key": process.env.ANTHROPIC_API_KEY },
       env: { ANTHROPIC_API_KEY: "brokered-at-firewall" },
     };
-  if (gatewayKey())
+  const key = await gatewayKey();
+  if (key)
     return {
       domain: "ai-gateway.vercel.sh",
-      headers: { authorization: `Bearer ${gatewayKey()}` },
+      headers: { authorization: `Bearer ${key}` },
       env: { ANTHROPIC_API_KEY: "", ANTHROPIC_AUTH_TOKEN: "brokered-at-firewall", ANTHROPIC_BASE_URL: "https://ai-gateway.vercel.sh/claude-code" },
     };
   return null;
 }
 
-function hasVercelAuth() {
+async function hasVercelAuth() {
   const e = process.env;
-  return Boolean(e.VERCEL_OIDC_TOKEN || (e.VERCEL_TOKEN && e.VERCEL_TEAM_ID && e.VERCEL_PROJECT_ID) || e.VERCEL);
+  return Boolean((e.VERCEL_TOKEN && e.VERCEL_TEAM_ID && e.VERCEL_PROJECT_ID) || (await oidcToken()));
 }
 
-export const isLive = () => hasVercelAuth() && broker() !== null;
+export const isLive = async () => (await hasVercelAuth()) && (await broker()) !== null;
 
 const text = (t: string): RunEvent[] => (t ? [{ type: "text", text: t }] : []);
 
@@ -62,7 +74,7 @@ function summarize(input: unknown): string {
 }
 
 export async function runAgent(q: string, emit: (e: RunEvent) => void, signal: AbortSignal): Promise<void> {
-  const b = broker();
+  const b = await broker();
   if (!b) return emit({ type: "error", message: "not configured" });
 
   const policy: NetworkPolicy = { allow: { [b.domain]: [{ transform: [{ headers: b.headers }] }] } };

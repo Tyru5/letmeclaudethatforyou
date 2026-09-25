@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/run")({
         const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
 
         if (!q) return new Response("missing q", { status: 400 });
-        if (!isLive()) return new Response("not configured", { status: 503 });
+        if (!(await isLive())) return new Response("not configured", { status: 503 });
         const denied = acquire(ip);
         if (denied) return new Response(denied, { status: 429 });
 

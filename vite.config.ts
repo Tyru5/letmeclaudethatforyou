@@ -9,8 +9,8 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: { tsconfigPaths: true },
     server: { allowedHosts: [".trycloudflare.com"] },
-    optimizeDeps: { exclude: ["satori", "@resvg/resvg-js", "@vercel/sandbox"] },
-    ssr: { external: ["satori", "@resvg/resvg-js", "@vercel/sandbox"] },
+    optimizeDeps: { exclude: ["@resvg/resvg-js", "@vercel/sandbox"] },
+    ssr: { external: ["@resvg/resvg-js", "@vercel/sandbox"] },
     plugins: [tanstackStart(), nitro(), viteReact(), tailwindcss()],
   };
 });

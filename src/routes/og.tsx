@@ -7,7 +7,7 @@ export const Route = createFileRoute("/og")({
       GET: async ({ request }) => {
         const { renderOg } = await import("@/server/og");
         const q = (new URL(request.url).searchParams.get("q") ?? "").trim().slice(0, MAX_PROMPT);
-        return new Response(await renderOg(q), {
+        return new Response(renderOg(q), {
           headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" },
         });
       },

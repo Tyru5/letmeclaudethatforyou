@@ -8,7 +8,7 @@ const getPageData = createServerFn().handler(async () => {
   const host = getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "localhost:3999";
   const proto = getRequestHeader("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const { isLive } = await import("@/server/run");
-  return { origin: `${proto}://${host}`, live: isLive() };
+  return { origin: `${proto}://${host}`, live: await isLive() };
 });
 
 export const Route = createFileRoute("/go")({
