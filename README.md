@@ -31,7 +31,7 @@ Vercel AI Gateway on the team's credits. Models: `CLAUDE_MODEL` (default `claude
 `CODEX_MODEL` (default `openai/gpt-5.3-codex` via gateway, CLI default with a direct key).
 
 How a run works (`src/server/run.ts`):
-- boots `vercel/sandbox/universal`, 1 vCPU, non-persistent, 3 min cap
+- boots `vercel/sandbox/universal`, 1 vCPU, non-persistent, agent killed after 60s
 - egress allow-list is only the model API host; the real key is injected at the sandbox firewall, the VM only ever holds a placeholder
 - runs `claude -p … --output-format stream-json`, streams to the page over SSE (`/api/run`)
 - limits: per-IP, concurrent, daily (`RUN_*` in `.env.example`)

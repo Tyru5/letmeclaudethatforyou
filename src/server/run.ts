@@ -157,7 +157,7 @@ export async function runAgent(
     image: "vercel/sandbox/universal",
     persistent: false,
     resources: { vcpus: 1 },
-    timeout: 180_000,
+    timeout: 90_000,
     env: spec.env,
     networkPolicy: policy(),
   });
@@ -199,10 +199,11 @@ export async function runAgent(
       stdout: sink,
       stderr: errSink,
       signal,
-      timeoutMs: 150_000,
+      timeoutMs: 60_000,
     });
     if (buf) for (const e of spec.parse(buf)) out(e);
-    if (cmd.exitCode !== 0 && !failed) emit({ type: "error", message: err.trim().split("\n").pop()?.slice(0, 200) || `exit ${cmd.exitCode}` });
+    if (cmd.exitCode !== 0 && !failed)
+      emit({ type: "error", message: cmd.exitCode === 137 ? "took longer than a minute" : err.trim().split("\n").pop()?.slice(0, 200) || `exit ${cmd.exitCode}` });
     emit({ type: "done", exitCode: cmd.exitCode });
   } finally {
     await sandbox.stop().catch(() => {});
