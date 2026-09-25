@@ -31,4 +31,5 @@ How a run works (`src/server/run.ts`):
 - boots `vercel/sandbox/universal`, 1 vCPU, non-persistent, agent killed after 60s
 - egress allow-list is only the model API host; the real key is injected at the sandbox firewall, the VM only ever holds a placeholder
 - runs `claude -p … --output-format stream-json`, streams to the page over SSE (`/api/run`)
-- limits: per-IP, concurrent, daily (`RUN_*` in `.env.example`)
+- links are HMAC-signed (`LINK_SECRET`); unsigned links still play the bit but never get a VM
+- transcripts cached in Upstash Redis (Marketplace) so a question runs once, ever; limits (per-IP, concurrent, daily; `RUN_*`) live there too, memory fallback without it
