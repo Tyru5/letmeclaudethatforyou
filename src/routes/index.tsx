@@ -20,7 +20,7 @@ function Home() {
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-16 gap-10">
       <header className="text-center max-w-xl">
         <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-          Let me <span className="text-accent">Claude</span> that for you
+          Let me <span className="shimmer">Claude</span> that for you
         </h1>
         <p className="mt-4 text-muted">
           For all those people who find it more convenient to bother you with their question

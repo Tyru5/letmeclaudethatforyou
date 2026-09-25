@@ -96,3 +96,22 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mascot { display: none; }
 }
+
+/* ---- heading shimmer: light band sweeps left → right across the word ---- */
+.shimmer {
+  background: linear-gradient(100deg, var(--accent) 42%, #ffe1d3 50%, var(--accent) 58%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3.5s ease-in-out 3s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 100% 0; }
+  45%  { background-position: 0% 0; }
+  100% { background-position: 0% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; background: none; color: var(--accent); }
+}
