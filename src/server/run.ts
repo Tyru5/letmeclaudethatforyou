@@ -55,7 +55,6 @@ const text = (t: string): RunEvent[] => (t ? [{ type: "text", text: t }] : []);
 function parse(line: string): RunEvent[] {
   let j: any;
   try { j = JSON.parse(line); } catch { return []; }
-  if (j.type === "system" && j.subtype === "init" && j.model) return [{ type: "tool", text: `model ${j.model}` }];
   if (j.type === "stream_event" && j.event?.type === "content_block_delta" && j.event.delta?.type === "text_delta")
     return text(j.event.delta.text);
   if (j.type === "assistant")
