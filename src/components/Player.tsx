@@ -40,7 +40,7 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
         setTyping({ prefix, prefixColor, text: text.slice(0, i) });
         await sleep(perChar + (Math.random() * perChar) / 2);
       }
-      await sleep(300);
+      await sleep(150);
       if (!cancelled) setTyping(null);
     }
 
@@ -59,7 +59,7 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
       // reveal streamed text a few chars at a time so it reads like a terminal
       reveal = setInterval(() => {
         if (!pendingRef.current) return;
-        const n = reduce ? pendingRef.current.length : 3;
+        const n = reduce ? pendingRef.current.length : 6;
         const chunk = pendingRef.current.slice(0, n);
         pendingRef.current = pendingRef.current.slice(n);
         setOutput((o) => o + chunk);
@@ -90,33 +90,33 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
     }
 
     async function run() {
-      await sleep(500);
+      await sleep(200);
       setTyping({ prefix: "$ ", text: "" });
-      await sleep(600);
-      await type("$ ", undefined, agent.cmd, 90);
+      await sleep(300);
+      await type("$ ", undefined, agent.cmd, 45);
       push({ text: `$ ${agent.cmd}`, muted: true });
-      await sleep(400);
+      await sleep(200);
       for (const [i, b] of agent.banner.entries()) {
         push(i === 0 ? { text: b, color: agent.color } : { text: b, muted: true });
-        await sleep(100);
+        await sleep(60);
       }
-      await sleep(500);
+      await sleep(250);
       setTyping({ prefix: `${agent.promptChar} `, prefixColor: agent.color, text: "" });
       setStep("Step 1: Type in your question");
-      await sleep(900);
-      const perChar = Math.max(18, Math.min(60, 3500 / Math.max(q.length, 1)));
+      await sleep(400);
+      const perChar = Math.max(12, Math.min(35, 1800 / Math.max(q.length, 1)));
       await type(`${agent.promptChar} `, agent.color, q, perChar);
       if (cancelled) return;
       setTyping({ prefix: `${agent.promptChar} `, prefixColor: agent.color, text: q });
       setStep("Step 2: Press Enter");
-      await sleep(1100);
+      await sleep(600);
       if (cancelled) return;
       setTyping(null);
       push({ text: q, prefix: `${agent.promptChar} `, prefixColor: agent.color });
       setStep(null);
       if (live) return runLive();
       setStatus("Thinking");
-      await sleep(1200);
+      await sleep(700);
       finish();
     }
     run();
