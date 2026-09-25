@@ -1,16 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import Terminal from "@/components/Terminal";
-import { AGENTS, type AgentId } from "@/lib/agents";
+import { AGENT } from "@/lib/agents";
 
 type Line = { text: string; color?: string; muted?: boolean; prefix?: string; prefixColor?: string };
 type Typing = { prefix: string; prefixColor?: string; text: string } | null;
 
 const REDIRECT_SECS = 4;
 
-export default function Player({ agentId, q, live }: { agentId: AgentId; q: string; live: boolean }) {
-  const agent = AGENTS[agentId];
-  const target = agent.webUrl?.(q);
+export default function Player({ q, live }: { q: string; live: boolean }) {
+  const agent = AGENT;
+  const target = agent.webUrl(q);
 
   const [lines, setLines] = useState<Line[]>([]);
   const [typing, setTyping] = useState<Typing>(null);
@@ -49,12 +49,12 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
       setStatus(null);
       setStep("Was that so hard?");
       setDone(true);
-      if (target && !live) setSecs(REDIRECT_SECS);
+      if (!live) setSecs(REDIRECT_SECS);
     }
 
     function runLive() {
       setStatus("Thinking");
-      const p = new URLSearchParams({ a: agentId, q });
+      const p = new URLSearchParams({ q });
       es = new EventSource(`/api/run?${p}`);
       // reveal streamed text a few chars at a time so it reads like a terminal
       reveal = setInterval(() => {
@@ -137,7 +137,7 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
   useEffect(() => {
     if (secs === null) return;
     if (secs <= 0) {
-      window.location.href = target!;
+      window.location.href = target;
       return;
     }
     const t = setTimeout(() => setSecs((s) => (s === null ? null : s - 1)), 1000);
@@ -190,8 +190,7 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
       </Terminal>
 
       <div className="h-9 text-center text-sm">
-        {done &&
-          (target ? (
+        {done && (
             <p className="pop text-muted">
               {live ? "Or " : "Taking you to "}
               <a href={target} className="text-fg underline underline-offset-2">
@@ -207,13 +206,7 @@ export default function Player({ agentId, q, live }: { agentId: AgentId; q: stri
                 </>
               )}
             </p>
-          ) : (
-            <p className="pop text-muted">
-              <a href={agent.installUrl} target="_blank" rel="noreferrer" className="text-fg underline underline-offset-2">
-                Install {agent.name}
-              </a>
-            </p>
-          ))}
+        )}
       </div>
 
       <p className="text-center text-xs">

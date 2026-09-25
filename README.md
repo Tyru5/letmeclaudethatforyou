@@ -11,7 +11,7 @@ npm run dev      # :3999
 npm run build    # dist/
 ```
 
-Links: `/go?a=<claude|codex|gemini|cursor|copilot>&q=<question>`
+Links: `/go?q=<question>`
 
 ## Live runs
 
@@ -24,11 +24,8 @@ echo ANTHROPIC_API_KEY=sk-ant-... >> .env.local
 ```
 
 Or durable: `VERCEL_TOKEN` + `VERCEL_TEAM_ID` + `VERCEL_PROJECT_ID` (see `.env.example`).
-`OPENAI_API_KEY` enables Codex, `GEMINI_API_KEY` enables Gemini.
-
-No provider keys? Set `AI_GATEWAY_USE_OIDC=1` (or `AI_GATEWAY_API_KEY`) and claude/codex route through
-Vercel AI Gateway on the team's credits. Models: `CLAUDE_MODEL` (default `claude-sonnet-5`),
-`CODEX_MODEL` (default `openai/gpt-5.3-codex` via gateway, CLI default with a direct key).
+No Anthropic key? Set `AI_GATEWAY_USE_OIDC=1` (or `AI_GATEWAY_API_KEY`) and it routes through
+Vercel AI Gateway on the team's credits. Model: `CLAUDE_MODEL` (default `claude-haiku-4-5`).
 
 How a run works (`src/server/run.ts`):
 - boots `vercel/sandbox/universal`, 1 vCPU, non-persistent, agent killed after 60s

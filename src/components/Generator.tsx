@@ -1,15 +1,13 @@
 import { useState, useSyncExternalStore } from "react";
-import { AGENTS, AGENT_LIST, DEFAULT_AGENT, MAX_PROMPT, buildSharePath, type AgentId } from "@/lib/agents";
+import { AGENT, MAX_PROMPT, buildSharePath } from "@/lib/agents";
 
 export default function Generator() {
-  const [agentId, setAgentId] = useState<AgentId>(DEFAULT_AGENT);
   const [q, setQ] = useState("");
   const [copied, setCopied] = useState(false);
   const origin = useSyncExternalStore(() => () => {}, () => window.location.origin, () => "");
 
-  const agent = AGENTS[agentId];
   const ready = q.trim().length > 0;
-  const path = buildSharePath(agentId, q);
+  const path = buildSharePath(q);
   const url = origin + path;
 
   async function copy() {
@@ -31,30 +29,8 @@ export default function Generator() {
       }}
       className="w-full max-w-xl mx-auto flex flex-col gap-4"
     >
-      <div className="flex flex-wrap justify-center gap-2" role="radiogroup" aria-label="Agent">
-        {AGENT_LIST.map((a) => {
-          const active = a.id === agentId;
-          return (
-            <button
-              key={a.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setAgentId(a.id)}
-              className="px-3 py-1 rounded-full border text-sm font-mono"
-              style={{
-                borderColor: active ? a.color : "var(--border)",
-                color: active ? a.color : "var(--muted)",
-              }}
-            >
-              {a.name}
-            </button>
-          );
-        })}
-      </div>
-
       <div className="flex items-start gap-2 rounded-lg border border-line bg-elev px-4 py-3 font-mono text-sm focus-within:border-fg/40">
-        <span style={{ color: agent.color }}>{agent.promptChar}</span>
+        <span style={{ color: AGENT.color }}>{AGENT.promptChar}</span>
         <textarea
           value={q}
           onChange={(e) => setQ(e.target.value.slice(0, MAX_PROMPT))}
@@ -83,7 +59,7 @@ export default function Generator() {
           type="submit"
           disabled={!ready}
           className="rounded-lg px-4 py-2 text-sm font-medium text-black disabled:opacity-40"
-          style={{ background: agent.color }}
+          style={{ background: AGENT.color }}
         >
           {copied ? "Copied" : "Copy"}
         </button>

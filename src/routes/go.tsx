@@ -2,22 +2,17 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import Player from "@/components/Player";
-import { DEFAULT_AGENT, MAX_PROMPT, isAgentId, type AgentId } from "@/lib/agents";
-
-type Search = { a: AgentId; q: string };
+import { MAX_PROMPT } from "@/lib/agents";
 
 const getPageData = createServerFn().handler(async () => {
   const host = getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "localhost:3999";
   const proto = getRequestHeader("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const { liveAgents } = await import("@/server/run");
-  return { origin: `${proto}://${host}`, live: liveAgents() };
+  const { isLive } = await import("@/server/run");
+  return { origin: `${proto}://${host}`, live: isLive() };
 });
 
 export const Route = createFileRoute("/go")({
-  validateSearch: (s: Record<string, unknown>): Search => ({
-    a: isAgentId(s.a) ? s.a : DEFAULT_AGENT,
-    q: String(s.q ?? "").trim().slice(0, MAX_PROMPT),
-  }),
+  validateSearch: (s: Record<string, unknown>) => ({ q: String(s.q ?? "").trim().slice(0, MAX_PROMPT) }),
   loaderDeps: ({ search }) => search,
   loader: () => getPageData(),
   // Deliberately anonymous: the link preview shows only the question.
@@ -43,12 +38,12 @@ export const Route = createFileRoute("/go")({
 });
 
 function Go() {
-  const { a, q } = Route.useSearch();
+  const { q } = Route.useSearch();
   const { live } = Route.useLoaderData();
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-16 gap-8">
       {q ? (
-        <Player key={`${a}:${q}`} agentId={a} q={q} live={live.includes(a)} />
+        <Player key={q} q={q} live={live} />
       ) : (
         <Link to="/" className="text-muted hover:text-fg">
           Let me Claude that for you
