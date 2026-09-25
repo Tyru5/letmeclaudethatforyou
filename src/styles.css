@@ -58,51 +58,40 @@ body {
 .mascot {
   position: fixed;
   left: 0;
-  bottom: 12vh;
+  bottom: 8vh;
   z-index: 50;
   pointer-events: none;
   will-change: transform;
-  animation: mascot-run 4.5s linear forwards;
+  animation: mascot-run 4.2s linear forwards;
 }
+/* diagonal: bottom-left in, top-right out */
 @keyframes mascot-run {
-  from { transform: translateX(-80px); }
-  to { transform: translateX(calc(100vw + 40px)); }
+  from { transform: translate(-120px, 0); }
+  to   { transform: translate(calc(100vw + 60px), -72vh); }
 }
 .mascot-hop {
   transform-origin: 50% 100%;
-  animation: mascot-hop 0.75s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+  animation: mascot-hop 0.7s cubic-bezier(0.35, 0, 0.65, 1) infinite;
 }
 @keyframes mascot-hop {
-  0%   { transform: translateY(0) scale(1.12, 0.88) rotate(-4deg); }
-  18%  { transform: translateY(-14px) scale(0.94, 1.08) rotate(0deg); }
-  50%  { transform: translateY(-72px) scale(1, 1) rotate(6deg); }
-  82%  { transform: translateY(-14px) scale(0.98, 1.04) rotate(2deg); }
-  100% { transform: translateY(0) scale(1.12, 0.88) rotate(-4deg); }
+  0%   { transform: translateY(0) scale(1.06, 0.94) rotate(-6deg); }
+  20%  { transform: translateY(-16px) scale(0.97, 1.04) rotate(-2deg); }
+  50%  { transform: translateY(-64px) scale(1, 1) rotate(4deg); }
+  80%  { transform: translateY(-16px) scale(0.98, 1.02) rotate(0deg); }
+  100% { transform: translateY(0) scale(1.06, 0.94) rotate(-6deg); }
 }
-.mascot-shadow {
-  position: absolute;
-  left: 8px;
-  bottom: -4px;
-  width: 40px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  animation: mascot-shadow 0.75s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+/* legs stretch on takeoff, tuck at the apex — the way the terminal sprite does it */
+.mascot-legs { transform-origin: 9px 4px; transform-box: view-box; animation: mascot-legs 0.7s ease-in-out infinite; }
+@keyframes mascot-legs {
+  0%, 100% { transform: scaleY(1); }
+  20% { transform: scaleY(1.6); }
+  55% { transform: scaleY(0.5); }
 }
-@keyframes mascot-shadow {
-  0%, 100% { transform: scale(1.1); opacity: 0.6; }
-  50% { transform: scale(0.55); opacity: 0.25; }
-}
-.mascot-leg { transform-origin: 50% 0; animation: mascot-leg 0.75s ease-in-out infinite; }
-.mascot-leg-r { animation-delay: -0.375s; }
-@keyframes mascot-leg {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px) rotate(12deg); }
-}
-.mascot-eyes { transform-origin: 32px 30px; animation: mascot-blink 2.2s steps(1) infinite; }
-@keyframes mascot-blink {
-  0%, 92%, 100% { transform: scaleY(1); }
-  94%, 98% { transform: scaleY(0.1); }
+/* eyes glance in the direction of travel */
+.mascot-eyes { animation: mascot-eyes 0.7s ease-in-out infinite; }
+@keyframes mascot-eyes {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(0.4px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .mascot { display: none; }
