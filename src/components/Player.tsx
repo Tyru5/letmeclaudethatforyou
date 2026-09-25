@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Terminal from "@/components/Terminal";
 import Mascot from "@/components/Mascot";
 import { AGENT } from "@/lib/agents";
@@ -173,9 +175,11 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
           </div>
         )}
         {output && (
-          <div className="mt-2 flex gap-2">
-            <span style={{ color: agent.color }}>⏺</span>
-            <span className={done ? "" : "cursor"}>{output}</span>
+          <div className="mt-2 flex min-w-0 gap-2">
+            <span className="shrink-0" style={{ color: agent.color }}>⏺</span>
+            <div className={`markdown min-w-0 flex-1 ${done ? "" : "cursor"}`}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+            </div>
           </div>
         )}
         {status && (
