@@ -7,8 +7,12 @@ const CACHE_TTL = 60 * 60 * 24 * 30;
 
 let redis: Redis | null | undefined;
 function db(): Redis | null {
-  if (redis === undefined)
-    redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? Redis.fromEnv() : null;
+  if (redis === undefined) {
+    // Vercel Marketplace injects KV_REST_API_*; plain Upstash uses UPSTASH_REDIS_REST_*
+    const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+    redis = url && token ? new Redis({ url, token }) : null;
+  }
   return redis;
 }
 export const durable = () => db() !== null;
