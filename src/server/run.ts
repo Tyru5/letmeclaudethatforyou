@@ -9,12 +9,14 @@ export type RunEvent =
   | { type: "done"; exitCode: number }
   | { type: "error"; message: string };
 
+type Broker = { domain: string; headers: Record<string, string> } | null;
+
 type Spec = {
   bin: string;
   pkg: string;
   args: (q: string) => string[];
   /** host the agent talks to + the auth header injected at the sandbox firewall */
-  broker: () => { domain: string; headers: Record<string, string> } | null;
+  broker: () => Broker;
   env: Record<string, string>;
   parse: (line: string) => RunEvent[];
 };
@@ -30,12 +32,17 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
       "--output-format", "stream-json", "--verbose", "--include-partial-messages",
       "--max-turns", "6", "--max-budget-usd", "0.25", "--dangerously-skip-permissions",
     ],
-    broker: () =>
+    broker: (): Broker =>
       process.env.ANTHROPIC_API_KEY
         ? { domain: "api.anthropic.com", headers: { "x-api-key": process.env.ANTHROPIC_API_KEY } }
-        : null,
+        : gatewayKey()
+          ? { domain: "ai-gateway.vercel.sh", headers: { authorization: `Bearer ${gatewayKey()}` } }
+          : null,
     env: {
-      ANTHROPIC_API_KEY: "brokered-at-firewall",
+      // direct: placeholder key, firewall swaps x-api-key. gateway: empty key + placeholder bearer, firewall swaps authorization.
+      ...(process.env.ANTHROPIC_API_KEY
+        ? { ANTHROPIC_API_KEY: "brokered-at-firewall" }
+        : { ANTHROPIC_API_KEY: "", ANTHROPIC_AUTH_TOKEN: "brokered-at-firewall", ANTHROPIC_BASE_URL: "https://ai-gateway.vercel.sh/claude-code" }),
       DISABLE_TELEMETRY: "1",
       DISABLE_ERROR_REPORTING: "1",
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
@@ -57,11 +64,15 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
     bin: "codex",
     pkg: "@openai/codex",
     args: (q) => ["exec", "--json", "--skip-git-repo-check", "--full-auto", q],
-    broker: () =>
+    broker: (): Broker =>
       process.env.OPENAI_API_KEY
         ? { domain: "api.openai.com", headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
-        : null,
-    env: { OPENAI_API_KEY: "brokered-at-firewall" },
+        : gatewayKey()
+          ? { domain: "ai-gateway.vercel.sh", headers: { authorization: `Bearer ${gatewayKey()}` } }
+          : null,
+    env: process.env.OPENAI_API_KEY
+      ? { OPENAI_API_KEY: "brokered-at-firewall" }
+      : { OPENAI_API_KEY: "brokered-at-firewall", OPENAI_BASE_URL: "https://ai-gateway.vercel.sh/v1" },
     parse: (line) => {
       let j: any;
       try { j = JSON.parse(line); } catch { return []; }
@@ -75,7 +86,7 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
     bin: "gemini",
     pkg: "@google/gemini-cli",
     args: (q) => ["-p", q, "--yolo"],
-    broker: () =>
+    broker: (): Broker =>
       process.env.GEMINI_API_KEY
         ? { domain: "generativelanguage.googleapis.com", headers: { "x-goog-api-key": process.env.GEMINI_API_KEY } }
         : null,
@@ -83,6 +94,11 @@ const SPECS: Partial<Record<AgentId, Spec>> = {
     parse: (line) => text(line + "\n"),
   },
 };
+
+/** AI Gateway credential: explicit key, or the OIDC token when opted in (team needs gateway credits). */
+function gatewayKey() {
+  return process.env.AI_GATEWAY_API_KEY || (process.env.AI_GATEWAY_USE_OIDC ? process.env.VERCEL_OIDC_TOKEN : "") || "";
+}
 
 function summarize(input: unknown): string {
   if (!input || typeof input !== "object") return "";
@@ -142,12 +158,17 @@ export async function runAgent(
 
     emit({ type: "status", text: "Running" });
     let buf = "";
+    let failed = false;
+    const out = (e: RunEvent) => {
+      if (e.type === "error") failed = true;
+      emit(e);
+    };
     const sink = new Writable({
       write(chunk, _enc, cb) {
         buf += chunk.toString();
         const lines = buf.split("\n");
         buf = lines.pop() ?? "";
-        for (const l of lines) for (const e of spec.parse(l)) emit(e);
+        for (const l of lines) for (const e of spec.parse(l)) out(e);
         cb();
       },
     });
@@ -157,14 +178,13 @@ export async function runAgent(
     const cmd = await sandbox.runCommand({
       cmd: spec.bin,
       args: spec.args(q),
-      cwd: "/vercel/sandbox",
       stdout: sink,
       stderr: errSink,
       signal,
       timeoutMs: 150_000,
     });
-    if (buf) for (const e of spec.parse(buf)) emit(e);
-    if (cmd.exitCode !== 0) emit({ type: "error", message: err.trim().split("\n").pop()?.slice(0, 200) || `exit ${cmd.exitCode}` });
+    if (buf) for (const e of spec.parse(buf)) out(e);
+    if (cmd.exitCode !== 0 && !failed) emit({ type: "error", message: err.trim().split("\n").pop()?.slice(0, 200) || `exit ${cmd.exitCode}` });
     emit({ type: "done", exitCode: cmd.exitCode });
   } finally {
     await sandbox.stop().catch(() => {});
