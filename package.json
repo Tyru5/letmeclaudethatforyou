@@ -1,26 +1,32 @@
 {
   "name": "letmeclaudethatforyou",
-  "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "vite dev --port 3999",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.6",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "@fontsource/geist-mono": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "@vercel/sandbox": "^3.5.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "satori": "^0.33.5"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "@tailwindcss/vite": "^4",
+    "@tanstack/router-cli": "^1.132.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0"
   }
 }
