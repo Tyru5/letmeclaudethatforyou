@@ -2,7 +2,9 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import Player from "@/components/Player";
-import { MAX_PROMPT } from "@/lib/agents";
+import { parseShareQuestion } from "@/lib/agents";
+
+type ShareSearch = { d?: string; q?: string; s?: string };
 
 const getPageData = createServerFn()
   .inputValidator((d: { q: string; s: string }) => d)
@@ -16,17 +18,18 @@ const getPageData = createServerFn()
   });
 
 export const Route = createFileRoute("/go")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    q: String(s.q ?? "").trim().slice(0, MAX_PROMPT),
-    s: typeof s.s === "string" ? s.s : "",
-  }),
+  validateSearch: (s: Record<string, unknown>): ShareSearch => {
+    const search: ShareSearch = {};
+    if (typeof s.d === "string") search.d = s.d;
+    else if (s.q !== undefined) search.q = String(s.q).trim();
+    if (typeof s.s === "string" && s.s) search.s = s.s;
+    return search;
+  },
   loaderDeps: ({ search }) => search,
-  loader: ({ deps }) => getPageData({ data: deps }),
-  // Deliberately anonymous: the link preview shows only the question.
-  head: ({ match, loaderData }) => {
-    const q = match.search.q;
-    const title = q.length > 70 ? q.slice(0, 70) + "…" : q || "…";
-    const image = `${loaderData?.origin ?? ""}/og?q=${encodeURIComponent(q)}`;
+  loader: ({ deps }) => getPageData({ data: { q: parseShareQuestion(deps), s: deps.s ?? "" } }),
+  head: ({ loaderData }) => {
+    const title = "Quick question";
+    const image = `${loaderData?.origin ?? ""}/og`;
     return {
       meta: [
         { title },
@@ -45,7 +48,9 @@ export const Route = createFileRoute("/go")({
 });
 
 function Go() {
-  const { q, s } = Route.useSearch();
+  const search = Route.useSearch();
+  const q = parseShareQuestion(search);
+  const s = search.s ?? "";
   const { live } = Route.useLoaderData();
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-16 gap-8">
