@@ -3,13 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Terminal from "@/components/Terminal";
-import Mascot from "@/components/Mascot";
 import { AGENT } from "@/lib/agents";
 
 type Line = { text: string; color?: string; muted?: boolean; prefix?: string; prefixColor?: string };
 type Typing = { prefix: string; prefixColor?: string; text: string } | null;
-
-const REDIRECT_SECS = 4;
 
 export default function Player({ q, sig, live }: { q: string; sig: string; live: boolean }) {
   const agent = AGENT;
@@ -21,7 +18,6 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
   const [status, setStatus] = useState<string | null>(null);
   const [output, setOutput] = useState("");
   const [done, setDone] = useState(false);
-  const [secs, setSecs] = useState<number | null>(null);
   const skipRef = useRef(false);
   const pendingRef = useRef("");
 
@@ -52,7 +48,6 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
       setStatus(null);
       setStep("Was that so hard?");
       setDone(true);
-      if (!live) setSecs(REDIRECT_SECS);
     }
 
     function runLive() {
@@ -137,16 +132,6 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (secs === null) return;
-    if (secs <= 0) {
-      window.location.href = target;
-      return;
-    }
-    const t = setTimeout(() => setSecs((s) => (s === null ? null : s - 1)), 1000);
-    return () => clearTimeout(t);
-  }, [secs, target]);
-
   const showSkip = !done && !status && !output;
 
   return (
@@ -197,19 +182,10 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
       <div className="h-9 text-center text-sm">
         {done && (
             <p className="pop text-muted">
-              {live ? "Or " : "Taking you to "}
+              {live ? "Or " : "Now "}
               <a href={target} className="text-fg underline underline-offset-2">
-                {live ? `ask ${agent.short} yourself` : agent.short}
+                ask {agent.short} yourself
               </a>
-              {secs !== null && secs > 0 ? ` in ${secs}…` : ""}
-              {secs !== null && secs > 0 && (
-                <>
-                  {" "}
-                  <button type="button" onClick={() => setSecs(null)} className="text-muted hover:text-fg">
-                    (cancel)
-                  </button>
-                </>
-              )}
             </p>
         )}
       </div>
@@ -219,7 +195,6 @@ export default function Player({ q, sig, live }: { q: string; sig: string; live:
           Make your own
         </Link>
       </p>
-      <Mascot play={done} delay={300} />
     </div>
   );
 }

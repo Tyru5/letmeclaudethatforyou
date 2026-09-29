@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 // Clawd, as Claude Code draws it in the terminal, on a quadrant-block grid (18 x 6 units):
 //    ▐▛███▜▌      head row, eyes are the two missing quadrants
 //   ▝▜█████▛▘     shoulders, rounded underneath
@@ -34,31 +32,5 @@ export function PeekingMascot() {
     <span className="peeking-mascot" aria-hidden>
       <Clawd />
     </span>
-  );
-}
-
-/** Hops in bottom-left, bounces diagonally across, exits top-right. Unmounts itself when done. */
-export default function Mascot({ play, delay = 0 }: { play: boolean; delay?: number }) {
-  const [on, setOn] = useState(false);
-
-  useEffect(() => {
-    if (!play || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setTimeout(() => setOn(true), delay);
-    return () => clearTimeout(t);
-  }, [play, delay]);
-
-  if (!on) return null;
-  return (
-    <div
-      className="mascot"
-      aria-hidden
-      onAnimationEnd={(e) => {
-        if (e.animationName === "mascot-run") setOn(false);
-      }}
-    >
-      <div className="mascot-hop">
-        <Clawd />
-      </div>
-    </div>
   );
 }
